@@ -1118,12 +1118,14 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	public void broadcast (ID target, Boolean hit) {
 		this.logger.debug("App called broadcast");
 		
+		System.out.println("Sending Broadcast");
+		
 		List<Node> nodes = this.getFingerTable();
 		Collections.sort(nodes);
 		for(int i = 0; i < nodes.size(); i++) {
 			try {
 				if(i+1 < nodes.size()) {
-					nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), this.getID(), target, 0, hit));
+					nodes.get(i).broadcast(new Broadcast(this.getPredecessorID(), this.getID(), target, 0, hit));
 				}
 			} catch (CommunicationException e) {
 				System.err.println("Error Broadcast: " + e.getMessage());

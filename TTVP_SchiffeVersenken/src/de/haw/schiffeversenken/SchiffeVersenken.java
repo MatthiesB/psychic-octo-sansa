@@ -27,13 +27,13 @@ public class SchiffeVersenken {
 		URL remoteURL = null;
 		
 		try {
-			localURL = new URL(protocol + "://141.22.27.33:4244/");
+			localURL = new URL(protocol + "://141.22.27.33:4245/");
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 
 		try {
-			remoteURL = new URL(protocol + "://141.22.27.30:4242/");
+			remoteURL = new URL(protocol + "://141.22.27.33:4244/");
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}

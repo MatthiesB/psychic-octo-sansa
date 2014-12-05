@@ -434,18 +434,20 @@ public final class NodeImpl extends Node {
 			this.logger.debug(" Send broadcast message");
 		}
 		
-		List<Node> nodes = this.impl.getFingerTable();
-		Collections.sort(nodes);
-		for(int i = 0; i < nodes.size(); i++) {
-			if(nodes.get(i).getNodeID() == info.getRange()) {
-				break;
-			}
-			try {
-				if(i+1 < nodes.size()) {
-					nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction()+1, info.getHit()));
+		System.out.println("Relaying Broadcast");
+		
+		if(info.getRange() != this.impl.getID()) {
+			List<Node> nodes = this.impl.getFingerTable();
+			Collections.sort(nodes);
+			for(int i = 0; i < nodes.size(); i++) {
+				if(nodes.get(i).getNodeID() == info.getRange()) {
+					break;
 				}
-			} catch (CommunicationException e) {
-				System.err.println("Error Relay Broadcast: " + e.getMessage());
+				try {
+					nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction()+1, info.getHit()));
+				} catch (CommunicationException e) {
+					System.err.println("Error Relay Broadcast: " + e.getMessage());
+				}
 			}
 		}
 		
