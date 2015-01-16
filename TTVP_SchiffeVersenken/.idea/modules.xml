@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/TTVP_SchiffeVersenken.iml" filepath="$PROJECT_DIR$/TTVP_SchiffeVersenken.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../open-chord_inet/open-chord.iml" filepath="$PROJECT_DIR$/../open-chord_inet/open-chord.iml" />
+    </modules>
+  </component>
+</project>
+

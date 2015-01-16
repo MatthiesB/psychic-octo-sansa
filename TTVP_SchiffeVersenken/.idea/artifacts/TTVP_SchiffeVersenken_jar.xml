@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="TTVP_SchiffeVersenken:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/TTVP_SchiffeVersenken_jar</output-path>
+    <root id="archive" name="TTVP_SchiffeVersenken.jar">
+      <element id="module-output" name="TTVP_SchiffeVersenken" />
+      <element id="module-output" name="open-chord" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../open-chord_inet/log4j-1.2.17.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

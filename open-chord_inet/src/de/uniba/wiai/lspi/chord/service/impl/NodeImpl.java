@@ -94,8 +94,8 @@ public final class NodeImpl extends Node {
 	 * this node.
 	 */
 	private Executor asyncExecutor;
-	
-	private Lock notifyLock; 
+
+	private Lock notifyLock;
 
 	/**
 	 * Creates that part of the local node which answers remote requests by
@@ -434,17 +434,32 @@ public final class NodeImpl extends Node {
 			this.logger.debug(" Send broadcast message");
 		}
 		
-		System.out.println("Relaying Broadcast");
-		
-		if(info.getRange() != this.impl.getID()) {
+		System.out.println("Recv Broadcast");
+
+		if(!info.getRange().equals(this.impl.getID())) {
 			List<Node> nodes = this.impl.getFingerTable();
 			Collections.sort(nodes);
+			int comp = 0;
 			for(int i = 0; i < nodes.size(); i++) {
-				if(nodes.get(i).getNodeID() == info.getRange()) {
-					break;
-				}
 				try {
-					nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction()+1, info.getHit()));
+					comp = nodes.get(i).getNodeID().compareTo(info.getRange());
+					if(comp == -1) { // smaller as range
+						nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
+						System.out.println("Relaying Broadcast: ID: "+this.impl.getID().toHexString(2)+" Range: "+info.getRange().toHexString(2)+" Dest: " + nodes.get(i).getNodeID().toHexString(2) + " New Range: "+nodes.get(i+ 1).getNodeID().toHexString(2));
+					}
+					if(comp == 0) { // range
+						nodes.get(i).broadcast(new Broadcast(nodes.get(i).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
+						System.out.println("Relaying Broadcast: ID: "+this.impl.getID().toHexString(2)+" Range: "+info.getRange().toHexString(2)+" Dest: " + nodes.get(i).getNodeID().toHexString(2) + " New Range: "+nodes.get(i).getNodeID().toHexString(2));
+					}
+					if(comp == 1 && this.impl.getID().compareTo(info.getRange()) == 1) { // greater as range
+						if(i + 1 < nodes.size()) {
+							nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
+							System.out.println("Relaying Broadcast: ID: "+this.impl.getID().toHexString(2)+" Range: "+info.getRange().toHexString(2)+" Dest: " + nodes.get(i).getNodeID().toHexString(2) + " New Range: "+nodes.get(i+1).getNodeID().toHexString(2));
+						} else {
+							nodes.get(i).broadcast(new Broadcast(nodes.get(0).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
+							System.out.println("Relaying Broadcast: ID: "+this.impl.getID().toHexString(2)+" Range: "+info.getRange().toHexString(2)+" Dest: " + nodes.get(i).getNodeID().toHexString(2) + " New Range: "+nodes.get(0).getNodeID().toHexString(2));
+						}
+					}
 				} catch (CommunicationException e) {
 					System.err.println("Error Relay Broadcast: " + e.getMessage());
 				}
