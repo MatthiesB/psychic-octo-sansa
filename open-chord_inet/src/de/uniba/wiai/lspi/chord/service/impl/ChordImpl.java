@@ -1120,23 +1120,27 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 		
 		System.out.println("Sending Broadcast");
 		
-		List<Node> nodes = this.getFingerTable();
-		Collections.sort(nodes);
+		List<Node> nodes = this.getFingerTable(); // geet nodes
+		Collections.sort(nodes); // sort
 		int comp = 0;
 		for(int i = 0; i < nodes.size(); i++) {
 			try {
-				comp = nodes.get(i).getNodeID().compareTo(this.getPredecessorID());
+				comp = nodes.get(i).getNodeID().compareTo(this.getPredecessorID()); // compare nodes with predecessor
 				if(comp == -1) { // smaller as predessessor
 					nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), this.getID(), target, 0, hit));
+					System.out.println("Sending BC: Range: "+nodes.get(i+1).getNodeID().toHexString(4) + " Target: "+target.toHexString(4));
 				}
-				if(comp == 0) { // predessessor
+				if(comp == 0) { // is predessessor
 					nodes.get(i).broadcast(new Broadcast(this.getPredecessorID(), this.getID(), target, 0, hit));
+					System.out.println("Sending BC: Range: "+this.getPredecessorID().toHexString(4) + " Target: "+target.toHexString(4));
 				}
 				if(comp == 1) { // greater as predessessor
-					if(i + 1 < nodes.size()) {
+					if(i + 1 < nodes.size()) { // is another node after this one?
 						nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), this.getID(), target, 0, hit));
-					} else {
+						System.out.println("Sending BC: Range: "+nodes.get(i+1).getNodeID().toHexString(4) + " Target: "+target.toHexString(4));
+					} else { // last node
 						nodes.get(i).broadcast(new Broadcast(nodes.get(0).getNodeID(), this.getID(), target, 0, hit));
+						System.out.println("Sending BC: Range: "+nodes.get(0).getNodeID().toHexString(4) + " Target: "+target.toHexString(4));
 					}
 				}
 			} catch (CommunicationException e) {

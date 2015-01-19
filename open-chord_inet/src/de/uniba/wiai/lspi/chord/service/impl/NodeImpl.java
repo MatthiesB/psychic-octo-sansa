@@ -436,28 +436,45 @@ public final class NodeImpl extends Node {
 		
 		System.out.println("Recv Broadcast");
 
+		// breaking condition
 		if(!info.getRange().equals(this.impl.getID())) {
-			List<Node> nodes = this.impl.getFingerTable();
-			Collections.sort(nodes);
+			List<Node> nodes = this.impl.getFingerTable(); // get nodes
+			Collections.sort(nodes); // sort
 			int comp = 0;
 			for(int i = 0; i < nodes.size(); i++) {
 				try {
-					comp = nodes.get(i).getNodeID().compareTo(info.getRange());
-					if(comp == -1) { // smaller as range
+					comp = nodes.get(i).getNodeID().compareTo(info.getRange()); // compare nodes with range
+					if(comp == -1) { // node smaller as range
+						System.out.println("Relaying Broadcast1: " +
+								"ID: "			+this.impl.getID().toHexString(2)			+" "+
+								"Range: "		+info.getRange().toHexString(2)				+" "+
+								"Dest: " 		+nodes.get(i).getNodeID().toHexString(2) 	+" "+
+								"New Range: "	+nodes.get(i+ 1).getNodeID().toHexString(2));
 						nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
-						System.out.println("Relaying Broadcast: ID: "+this.impl.getID().toHexString(2)+" Range: "+info.getRange().toHexString(2)+" Dest: " + nodes.get(i).getNodeID().toHexString(2) + " New Range: "+nodes.get(i+ 1).getNodeID().toHexString(2));
 					}
-					if(comp == 0) { // range
-						nodes.get(i).broadcast(new Broadcast(nodes.get(i).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
-						System.out.println("Relaying Broadcast: ID: "+this.impl.getID().toHexString(2)+" Range: "+info.getRange().toHexString(2)+" Dest: " + nodes.get(i).getNodeID().toHexString(2) + " New Range: "+nodes.get(i).getNodeID().toHexString(2));
+					if(comp == 0) { // node == range
+						System.out.println("Relaying Broadcast2: " +
+								"ID: "			+this.impl.getID().toHexString(2)			+" "+
+								"Range: "		+info.getRange().toHexString(2)				+" "+
+								"Dest: " 		+nodes.get(i).getNodeID().toHexString(2) 	+" "+
+								"New Range: "	+info.getRange().toHexString(2));
+						nodes.get(i).broadcast(new Broadcast(info.getRange(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
 					}
-					if(comp == 1 && this.impl.getID().compareTo(info.getRange()) == 1) { // greater as range
-						if(i + 1 < nodes.size()) {
+					if(comp == 1 && this.impl.getID().compareTo(info.getRange()) == 1) { // node greater as range
+						if(i + 1 < nodes.size()) {  //there is a node after the actual one
+							System.out.println("Relaying Broadcast3: " +
+									"ID: "			+this.impl.getID().toHexString(2)			+" "+
+									"Range: "		+info.getRange().toHexString(2)				+" "+
+									"Dest: " 		+nodes.get(i).getNodeID().toHexString(2) 	+" "+
+									"New Range: "	+nodes.get(i+1).getNodeID().toHexString(2));
 							nodes.get(i).broadcast(new Broadcast(nodes.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
-							System.out.println("Relaying Broadcast: ID: "+this.impl.getID().toHexString(2)+" Range: "+info.getRange().toHexString(2)+" Dest: " + nodes.get(i).getNodeID().toHexString(2) + " New Range: "+nodes.get(i+1).getNodeID().toHexString(2));
-						} else {
+						} else { // last node
+							System.out.println("Relaying Broadcast4: " +
+									"ID: "			+this.impl.getID().toHexString(2)			+" "+
+									"Range: "		+info.getRange().toHexString(2)				+" "+
+									"Dest: " 		+nodes.get(i).getNodeID().toHexString(2) 	+" "+
+									"New Range: "	+nodes.get(0).getNodeID().toHexString(2));
 							nodes.get(i).broadcast(new Broadcast(nodes.get(0).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction() +1, info.getHit()));
-							System.out.println("Relaying Broadcast: ID: "+this.impl.getID().toHexString(2)+" Range: "+info.getRange().toHexString(2)+" Dest: " + nodes.get(i).getNodeID().toHexString(2) + " New Range: "+nodes.get(0).getNodeID().toHexString(2));
 						}
 					}
 				} catch (CommunicationException e) {

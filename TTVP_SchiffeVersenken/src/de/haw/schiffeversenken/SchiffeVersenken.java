@@ -4,12 +4,15 @@
 package de.haw.schiffeversenken;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.util.Collections;
 
+import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
 import de.uniba.wiai.lspi.chord.service.Chord;
 import de.uniba.wiai.lspi.chord.service.ServiceException;
+import de.uniba.wiai.lspi.chord.service.impl.ChordImpl;
 import de.uniba.wiai.lspi.util.logging.SystemOutPrintlnLogger;
 
 /**
@@ -18,11 +21,15 @@ import de.uniba.wiai.lspi.util.logging.SystemOutPrintlnLogger;
  */
 public class SchiffeVersenken {
 
+	private static SVLogic GameLogic;
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 
+
+		// check params
 		if(args.length < 3) {
 			System.out.println("Wrong Args!");
 			System.out.println("Usage: SchiffeVersenken {create|join} ip port [remoteIP remotePort]");
@@ -35,6 +42,7 @@ public class SchiffeVersenken {
 			System.exit(1);
 		}
 
+		// init chord
 		de.uniba.wiai.lspi.chord.service.PropertiesLoader.loadPropertyFile();
 		String protocol = URL.KNOWN_PROTOCOLS.get(URL.SOCKET_PROTOCOL);
 		URL localURL = null;
@@ -54,11 +62,14 @@ public class SchiffeVersenken {
 			}
 		}
 
-		Chord chord = new de.uniba.wiai.lspi.chord.service.impl.ChordImpl();
+		ChordImpl chord = new de.uniba.wiai.lspi.chord.service.impl.ChordImpl();
 
-		SVCallback callback = new SVCallback();
+		GameLogic = new SVLogic(chord);
+
+		SVCallback callback = new SVCallback(GameLogic);
 		chord.setCallback(callback);
 
+		// join or create?
 		if(args[0].equals("join")) {
 			try {
 				chord.join(localURL, remoteURL);
@@ -77,6 +88,7 @@ public class SchiffeVersenken {
 			System.exit(1);
 		}
 
+		// wait for all players to be ready
 		System.out.println("Press enter to continue...");
 		try {
 			System.in.read();
@@ -84,19 +96,29 @@ public class SchiffeVersenken {
 			e.printStackTrace();
 		}
 
-		if(chord.retrieve(chord.getID()).)
+		System.out.println("Game running!");
 
-		System.out.println("Wuhey!");
-		while(true) {
-			chord.broadcast(chord.getID(), false);
+		GameLogic.Init(); // init game logic
+		GameLogic.start(); // start game logic thread
 
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		BigInteger MaxID = ((new BigInteger("2").pow(160)).subtract(new BigInteger("1")));
+
+
+		System.out.println("ID: "+chord.getID().toHexString(4) + " PrdID: "+chord.getPredecessorID().toHexString(4));
+
+		if(ID.valueOf(MaxID).isInInterval(chord.getPredecessorID(), chord.getID())) { // are we the first to shoot?
+			System.out.println("First Fire!");
+			GameLogic.FirstFire(); // shoot!
 		}
+
+		System.out.println("Press enter to cancel game...");
+		try {
+			System.in.read();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		chord.leave();
+		System.exit(0);
 	}
 
 }
