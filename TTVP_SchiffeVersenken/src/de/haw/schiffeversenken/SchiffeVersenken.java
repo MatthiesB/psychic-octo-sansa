@@ -108,6 +108,11 @@ public class SchiffeVersenken {
 
 		if(ID.valueOf(MaxID).isInInterval(chord.getPredecessorID(), chord.getID())) { // are we the first to shoot?
 			System.out.println("First Fire!");
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			GameLogic.FirstFire(); // shoot!
 		}
 

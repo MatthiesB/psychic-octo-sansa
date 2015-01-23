@@ -43,17 +43,19 @@ public class SVLogic extends Thread {
                 if(player.getShotcount() == 99) {
                     ShotFired = true;
                     chord.retrieve(player.GetTargetUpward());
-                    break;
+                    return;
                 }
                 if(player.getHitcount() == 9) {
                     ShotFired = true;
                     chord.retrieve(player.GetTargetUpward());
-                    break;
+                    return;
                 }
             }
         }
         ShotFired = true;
-        chord.retrieve(predPlayer.GetTargetUpward());
+        ID id = predPlayer.GetTargetDownward();
+        System.out.println("Target: "+id.toHexString(4));
+        chord.retrieve(id);
     }
 
     // we are the first du shot!
@@ -75,6 +77,7 @@ public class SVLogic extends Thread {
     public void Shot(ID source, ID target, boolean hit) {
         SVPlayer tmpPlayer = new SVPlayer(source, 100);
         int indx = Ocean.indexOf(tmpPlayer);
+        System.out.println(""+indx);
         if(indx != -1) { // player already exists?
             Ocean.get(indx).Shot(new SVShot(target, hit)); // update player
             if(ShotFired && Ocean.get(indx).getHitcount() == 10) { // check for win
@@ -92,7 +95,9 @@ public class SVLogic extends Thread {
     // recalculate data model
     private void RecalcOcean() {
         Collections.sort(Ocean);
-        Ocean.get(0).CalculateIntervalls(ID.valueOf(new BigInteger("0")), Ocean.get(0).getId());
+
+        // BUG HERE! Missing wrap around. Reason why game only ends sometimes. Due to be fixed on tuesday.
+        Ocean.get(0).CalculateIntervalls(Ocean.get(Ocean.size()-1).getId(), Ocean.get(0).getId());
         for(int i = 1; i < Ocean.size(); i++) {
             Ocean.get(i).CalculateIntervalls(Ocean.get(i-1).getId(), Ocean.get(i).getId());
         }
@@ -108,7 +113,6 @@ public class SVLogic extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("Wake Up!");
             this.Fire();
         }
     }

@@ -1,6 +1,7 @@
 package de.haw.schiffeversenken;
 
 import de.uniba.wiai.lspi.chord.data.ID;
+import de.uniba.wiai.lspi.util.logging.SystemOutPrintlnLogger;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -22,13 +23,16 @@ public class SVPlayer implements Comparable<SVPlayer> {
     private ArrayList<ID> intervalls; // intervall boundaries
     private int hitcount = 0; // count hits for strategy purposes and win detection
     private int I; //
+    private int S;
     private BigInteger range; // range between intervall boundaries
+    private boolean isOwn = false;
 
 
     // for the own player representation
     public SVPlayer(ID id, int I, int S) {
         this(id, I);
-
+        this.S = S;
+        isOwn = true;
         int tmpVal;
         for(int i = 0; i < S; i++) {
             do {
@@ -66,7 +70,7 @@ public class SVPlayer implements Comparable<SVPlayer> {
     public ID GetTargetDownward() {
         for(int i = fields.length-1; i >= 0; i--) {
             if(fields[i] == EMPTY) {
-                return ID.valueOf(this.intervalls.get(i).toBigInteger().add((range.divide(new BigInteger("2")))));
+                return ID.valueOf(this.intervalls.get(i).toBigInteger().add(new BigInteger("1")));
             }
         }
         return null;
@@ -76,7 +80,7 @@ public class SVPlayer implements Comparable<SVPlayer> {
     public ID GetTargetUpward() {
         for(int i = 0; i < fields.length; i++) {
             if(fields[i] == EMPTY) {
-                return ID.valueOf(this.intervalls.get(i).toBigInteger().add((range.divide(new BigInteger("2")))));
+                return ID.valueOf(this.intervalls.get(i).toBigInteger().add(new BigInteger("1")));
             }
         }
         return null;
@@ -94,65 +98,114 @@ public class SVPlayer implements Comparable<SVPlayer> {
     // writing external shotinfo in data model
     private void CalcHit(SVShot shot) {
         for(int i = 1; i < this.I; i++) {
-            if(shot.getTarget().isInInterval(this.intervalls.get(i - 1), this.intervalls.get(i))) {
+            if(this.InInterval(shot.getTarget(), this.intervalls.get(i - 1), this.intervalls.get(i))) {
+            //if(shot.getTarget().isInInterval(this.intervalls.get(i - 1), this.intervalls.get(i))) {
                 if(shot.isHit()) {
                     fields[i-1] = HIT;
+                    return;
                 } else {
                     fields[i-1] = MISS;
+                    return;
                 }
             }
         }
-        if(shot.getTarget().isInInterval(this.intervalls.get(this.intervalls.size() - 1), this.id)) {
+        if(this.InInterval(shot.getTarget(), this.intervalls.get(this.intervalls.size() - 1), this.id)) {
+        //if(shot.getTarget().isInInterval(this.intervalls.get(this.intervalls.size() - 1), this.id)) {
             if(shot.isHit()) {
                 fields[this.intervalls.size()-1] = HIT;
+                return;
             } else {
                 fields[this.intervalls.size()-1] = MISS;
+                return;
             }
         }
+        System.out.println("Bad...");
     }
 
     // handling the retrieve
     public boolean Inbound(ID target) {
         for(int i = 1; i < this.I; i++) {
-            if(target.isInInterval(this.intervalls.get(i - 1), this.intervalls.get(i))) {
+            if(this.InInterval(target, this.intervalls.get(i - 1), this.intervalls.get(i))) {
+                //if(target.isInInterval(this.intervalls.get(i - 1), this.intervalls.get(i))) {
                 if(fields[i-1] == SHIP) {
                     this.shots.add(new SVShot(target, true));
                     this.hitcount++;
+                    System.out.println("Hit :( "+hitcount);
+                    fields[i-1] = HIT;
                     return true;
                 } else {
                     this.shots.add(new SVShot(target, false));
+                    fields[i-1] = MISS;
                     return false;
                 }
             }
         }
-        if(target.isInInterval(this.intervalls.get(this.intervalls.size() - 1), this.id)) {
+        if(this.InInterval(target, this.intervalls.get(this.intervalls.size() - 1), this.id)) {
+            //if(target.isInInterval(this.intervalls.get(this.intervalls.size() - 1), this.id)) {
             if(fields[this.intervalls.size()-1] == SHIP) {
                 this.shots.add(new SVShot(target, true));
                 this.hitcount++;
+                System.out.println("Hit :( "+hitcount);
+                fields[this.intervalls.size()-1] = HIT;
                 return true;
             } else {
                 this.shots.add(new SVShot(target, false));
+                fields[this.intervalls.size()-1] = MISS;
                 return false;
             }
         }
+        System.out.println("Very, very bad...");
         return false; // should never happen...
     }
 
     // (re-)calculate the intervals of the node
     public void CalculateIntervalls(ID start, ID end) {
-        range = end.toBigInteger().subtract(start.toBigInteger());
-        BigInteger intervall = range.divide(new BigInteger(""+this.I));
+        if(!isOwn) {
+            fields = new int[this.I];
+            java.util.Arrays.fill(fields, EMPTY);
+        }
         this.intervalls = new ArrayList<ID>(I);
-        BigInteger counter = start.toBigInteger();
-        for(int i = 0; i < this.I; i++) {
-            this.intervalls.add(i, ID.valueOf(counter));
-            counter = counter.add(intervall);
+        if (start.toBigInteger().compareTo(end.toBigInteger()) == -1) { // start smaller as end
+            range = end.toBigInteger().subtract(start.toBigInteger());
+            BigInteger intervall = range.divide(new BigInteger("" + this.I));
+
+            BigInteger counter = start.toBigInteger();
+            for (int i = 0; i < this.I; i++) {
+                this.intervalls.add(i, ID.valueOf(counter));
+                counter = counter.add(intervall);
+            }
+        } else {
+            BigInteger MaxID = ((new BigInteger("2").pow(160)).subtract(new BigInteger("1")));
+            range = MaxID.subtract(start.toBigInteger()).add(end.toBigInteger());
+            BigInteger intervall = range.divide(new BigInteger("" + this.I));
+
+            BigInteger counter = start.toBigInteger();
+            for (int i = 0; i < this.I; i++) {
+                if (counter.compareTo(MaxID) == -1) { //smaller as MaxID
+                    this.intervalls.add(i, ID.valueOf(counter));
+                } else {
+                    this.intervalls.add(i, ID.valueOf(counter.subtract(MaxID)));
+                }
+                counter = counter.add(intervall);
+            }
+        }
+        System.out.println("My ID: "+this.id.toHexString(4));
+        for(ID interv : intervalls) {
+            System.out.println(""+interv.toHexString(4));
         }
 
-        fields = new int[this.I];
-        for(SVShot x : shots) {
-            this.CalcHit(x);
+
+        if(!isOwn) {
+            for (SVShot x : shots) {
+                this.CalcHit(x);
+            }
         }
+    }
+
+    private boolean InInterval(ID target, ID start, ID end) {
+        ID tmpstart = ID.valueOf((start.toBigInteger().subtract(new BigInteger("1"))));
+        ID tmpend = ID.valueOf((end.toBigInteger().add(new BigInteger("1"))));
+        return target.isInInterval(tmpstart, tmpend);
     }
 
     @Override
